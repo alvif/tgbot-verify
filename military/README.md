@@ -1,26 +1,29 @@
-# ChatGPT 军人 SheerID 认证思路
+# Modul Verifikasi SheerID ChatGPT Militer
 
-## 📋 概述
+## Gambaran Umum
 
-ChatGPT 军人认证流程与普通学生/教师认证不同，需要先执行一个额外的接口来收集军人状态信息，然后再提交个人信息表单。
+Dokumen ini merangkum bagaimana alur verifikasi SheerID untuk program militer ChatGPT bekerja. Validasi militer sedikit berbeda dibanding verifikasi guru/mahasiswa karena SheerID meminta status militer diverifikasi terlebih dahulu sebelum formulir identitas pribadi dapat dikirim.
 
-## 🔄 认证流程
+## Alur Permintaan
 
-### 第一步：收集军人状态 (collectMilitaryStatus)
+### Langkah 1 – Tetapkan status militer (`collectMilitaryStatus`)
 
-在提交个人信息表单之前，必须先调用此接口来设置军人状态。
+Langkah ini menandai status calon pengguna sebagai veteran/aktif sehingga SheerID menampilkan formulir yang sesuai.
 
-**请求信息**：
+**Permintaan**
+
 - **URL**: `https://services.sheerid.com/rest/v2/verification/{verificationId}/step/collectMilitaryStatus`
-- **方法**: `POST`
-- **参数**:
+- **Metode**: `POST`
+- **Body**:
+
 ```json
 {
-    "status": "VETERAN" // 总共3个
+    "status": "VETERAN"
 }
 ```
 
-**响应示例**：
+**Respons Contoh**
+
 ```json
 {
     "verificationId": "{verification_id}",
@@ -37,21 +40,23 @@ ChatGPT 军人认证流程与普通学生/教师认证不同，需要先执行�
 }
 ```
 
-**关键字段**：
-- `submissionUrl`: 下一步需要使用的提交URL
-- `currentStep`: 当前步骤，应该变为 `collectInactiveMilitaryPersonalInfo`
+**Catatan**
+
+- `submissionUrl` adalah endpoint yang harus dipakai pada langkah berikutnya.
+- `currentStep` akan berubah menjadi `collectInactiveMilitaryPersonalInfo` jika status berhasil diperbarui.
 
 ---
 
-### 第二步：收集非现役军人个人信息 (collectInactiveMilitaryPersonalInfo)
+### Langkah 2 – Kirimkan informasi pribadi (`collectInactiveMilitaryPersonalInfo`)
 
-使用第一步返回的 `submissionUrl` 提交个人信息。
+Setelah menerima `submissionUrl`, kirim data profil lengkap melalui endpoint tersebut.
 
-**请求信息**：
-- **URL**: 从第一步响应的 `submissionUrl` 获取
-  - 例如: `https://services.sheerid.com/rest/v2/verification/{verificationId}/step/collectInactiveMilitaryPersonalInfo`
-- **方法**: `POST`
-- **参数**:
+**Permintaan**
+
+- **URL**: nilai `submissionUrl` dari langkah 1 (biasanya `https://services.sheerid.com/rest/v2/verification/{verificationId}/step/collectInactiveMilitaryPersonalInfo`)
+- **Metode**: `POST`
+- **Body**:
+
 ```json
 {
     "firstName": "name",
@@ -76,109 +81,45 @@ ChatGPT 军人认证流程与普通学生/教师认证不同，需要先执行�
 }
 ```
 
-**关键字段说明**：
-- `firstName`: 名字
-- `lastName`: 姓氏
-- `birthDate`: 出生日期，格式 `YYYY-MM-DD`
-- `email`: 邮箱地址
-- `phoneNumber`: 电话号码（可为空）
-- `organization`: 军队组织信息（见下方组织列表）
-- `dischargeDate`: 退役日期，格式 `YYYY-MM-DD`
-- `locale`: 语言区域，默认 `en-US`
-- `country`: 国家代码，默认 `US`
-- `metadata`: 元数据信息（包含隐私政策同意文本等）
+**Penjelasan Field**
+
+- `firstName` / `lastName`: nama depan dan belakang.
+- `birthDate` / `dischargeDate`: format `YYYY-MM-DD`.
+- `organization`: pilih ID cabang militer yang relevan (lihat tabel di bawah).
+- `email` dan `phoneNumber`: kontak pengguna (nomor telepon dapat dikosongkan).
+- `metadata`: tetap gunakan nilai yang diminta SheerID, khususnya `submissionOptIn`.
 
 ---
 
-## 🎖️ 军队组织列表 (Organization)
+## Referensi Organisasi Militer
 
-以下是可用的军队组织选项：
+| ID       | Cabang        |
+|----------|---------------|
+| `4070`   | Army          |
+| `4073`   | Air Force     |
+| `4072`   | Navy          |
+| `4071`   | Marine Corps  |
+| `4074`   | Coast Guard   |
+| `4544268`| Space Force   |
 
-```json
-[
-    {
-        "id": 4070,
-        "idExtended": "4070",
-        "name": "Army",
-        "country": "US",
-        "type": "MILITARY",
-        "latitude": 39.7837304,
-        "longitude": -100.445882
-    },
-    {
-        "id": 4073,
-        "idExtended": "4073",
-        "name": "Air Force",
-        "country": "US",
-        "type": "MILITARY",
-        "latitude": 39.7837304,
-        "longitude": -100.445882
-    },
-    {
-        "id": 4072,
-        "idExtended": "4072",
-        "name": "Navy",
-        "country": "US",
-        "type": "MILITARY",
-        "latitude": 39.7837304,
-        "longitude": -100.445882
-    },
-    {
-        "id": 4071,
-        "idExtended": "4071",
-        "name": "Marine Corps",
-        "country": "US",
-        "type": "MILITARY",
-        "latitude": 39.7837304,
-        "longitude": -100.445882
-    },
-    {
-        "id": 4074,
-        "idExtended": "4074",
-        "name": "Coast Guard",
-        "country": "US",
-        "type": "MILITARY",
-        "latitude": 39.7837304,
-        "longitude": -100.445882
-    },
-    {
-        "id": 4544268,
-        "idExtended": "4544268",
-        "name": "Space Force",
-        "country": "US",
-        "type": "MILITARY",
-        "latitude": 39.7837304,
-        "longitude": -100.445882
-    }
-]
-```
-
-**组织ID映射**：
-- `4070` - Army (陆军)
-- `4073` - Air Force (空军)
-- `4072` - Navy (海军)
-- `4071` - Marine Corps (海军陆战队)
-- `4074` - Coast Guard (海岸警卫队)
-- `4544268` - Space Force (太空军)
+Semua entri di atas bertipe `MILITARY` dan memiliki koordinat default yang sama pada data SheerID.
 
 ---
 
-## 🔑 实现要点
+## Tips Implementasi
 
-1. **必须按顺序执行**：必须先调用 `collectMilitaryStatus`，获取 `submissionUrl` 后，再调用 `collectInactiveMilitaryPersonalInfo`
-2. **组织信息**：`organization` 字段需要包含 `id` 和 `name`，可以从上述列表中随机选择或让用户选择
-3. **日期格式**：`birthDate` 和 `dischargeDate` 必须使用 `YYYY-MM-DD` 格式
-4. **元数据**：`metadata` 字段中的 `submissionOptIn` 包含隐私政策同意文本，需要从原始请求中提取或构造
+1. Simpan `submissionUrl` dari respons pertama dan gunakan kembali agar tidak perlu menebak endpoint berikutnya.
+2. Pastikan nilai `organization.id` dan `organization.name` saling cocok.
+3. Validasi format tanggal sebelum mengirim sehingga SheerID tidak menolak request.
+4. Metadata harus tetap dikirim apa adanya; hanya ubah nilai yang benar-benar diperlukan seperti `refererUrl` atau `verificationId`.
 
 ---
 
-## 📝 待实现功能
+## Checklist Validasi
 
-- [ ] 实现 `collectMilitaryStatus` 接口调用
-- [ ] 实现 `collectInactiveMilitaryPersonalInfo` 接口调用
-- [ ] 添加军队组织选择逻辑
-- [ ] 生成符合要求的个人信息（姓名、出生日期、邮箱等）
-- [ ] 生成退役日期（需要合理的时间范围）
-- [ ] 处理元数据信息（从原始请求中提取或构造）
-- [ ] 集成到主机器人命令系统（如 `/verify6`）
-
+- [ ] Panggilan `collectMilitaryStatus` berhasil dan mengembalikan `submissionUrl`.
+- [ ] Data `collectInactiveMilitaryPersonalInfo` dikirim menggunakan `submissionUrl` terbaru.
+- [ ] ID organisasi sesuai cabang yang diinginkan.
+- [ ] Semua tanggal menggunakan format `YYYY-MM-DD`.
+- [ ] Metadata menyertakan kalimat `submissionOptIn` yang dikonfirmasi.
+- [ ] Jalur verifikasi baru (`/verify6` atau serupa) menyimpan respons SheerID agar dapat diteruskan ke pengguna bot.
